@@ -1,4 +1,5 @@
 name: Publicar imagem FSTT
+# Repositório: https://github.com/SalvaodorAssuilo/documenso-fstt
 
 # Constrói a imagem Docker do fork (linux/amd64, a arquitectura da VPS) e
 # publica-a no GitHub Container Registry. Nunca se constrói na VPS: 1 vCPU.
