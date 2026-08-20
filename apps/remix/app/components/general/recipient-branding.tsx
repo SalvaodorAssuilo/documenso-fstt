@@ -16,7 +16,8 @@ export type RecipientBrandingProps = {
 
 /**
  * Renders a `<style nonce>` block for a recipient route, scoped to the
- * `.documenso-branded` wrapper rendered in `_recipient+/_layout.tsx`.
+ * `.documenso-branded` wrapper rendered in `_recipient+/_layout.tsx`, and only
+ * while the light theme is active (see note below).
  *
  * Both the CSS variables (from `branding.colors`) and the user's custom CSS
  * (from `branding.css`) are emitted inside a single nested rule so the user
@@ -56,7 +57,11 @@ export const RecipientBranding = ({ branding, cspNonce }: RecipientBrandingProps
   const hasUserCss = userCss.trim().length > 0;
 
   const innerBody = `${hasVars ? `${varsString}\n` : ''}${hasUserCss ? userCss : ''}`.trim();
-  const css = `.documenso-branded { ${innerBody} }`;
+  // FSTT: as cores de marca são escolhidas para fundo claro (o formulário só tem
+  // um conjunto de cores). Aplicá-las em modo escuro sobrepõe `--foreground` com
+  // uma cor escura sobre fundo escuro e torna a página de assinatura ilegível.
+  // Por isso só se aplicam quando o tema escuro (`.dark` no <html>) não está activo.
+  const css = `:root:not(.dark) .documenso-branded { ${innerBody} }`;
 
   useEffect(() => {
     if (!branding?.allowCustomBranding) {

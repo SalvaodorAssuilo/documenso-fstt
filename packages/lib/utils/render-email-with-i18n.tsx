@@ -14,7 +14,7 @@ export const renderEmailWithI18N = async (
   try {
     const { lang: providedLang, ...otherOptions } = options ?? {};
 
-    const lang = isValidLanguageCode(providedLang) ? providedLang : APP_I18N_OPTIONS.sourceLang;
+    const lang = isValidLanguageCode(providedLang) ? providedLang : APP_I18N_OPTIONS.defaultLang;
 
     const i18n = await getI18nInstance(lang);
 

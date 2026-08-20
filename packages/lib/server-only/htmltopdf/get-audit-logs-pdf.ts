@@ -9,7 +9,7 @@ import {
   NEXT_PUBLIC_WEBAPP_URL,
   USE_INTERNAL_URL_BROWSERLESS,
 } from '../../constants/app';
-import { isValidLanguageCode, type SupportedLanguageCodes } from '../../constants/i18n';
+import { APP_I18N_OPTIONS, isValidLanguageCode, type SupportedLanguageCodes } from '../../constants/i18n';
 import { env } from '../../utils/env';
 import { encryptSecondaryData } from '../crypto/encrypt';
 
@@ -51,7 +51,7 @@ export const getAuditLogsPdf = async ({ documentId, language }: GetAuditLogsPdfO
 
   const page = await browserContext.newPage();
 
-  const lang = isValidLanguageCode(language) ? language : 'en';
+  const lang = isValidLanguageCode(language) ? language : APP_I18N_OPTIONS.defaultLang;
 
   await page.context().addCookies([
     {

@@ -107,7 +107,7 @@ export const buildOrganisationWhereQuery = ({
 export const generateDefaultOrganisationSettings = (): Omit<OrganisationGlobalSettings, 'id' | 'organisation'> => {
   return {
     documentVisibility: DocumentVisibility.EVERYONE,
-    documentLanguage: 'en',
+    documentLanguage: 'pt-BR',
     documentTimezone: null, // Null means local timezone.
     documentDateFormat: DEFAULT_DOCUMENT_DATE_FORMAT,
     delegateDocumentOwnership: false,

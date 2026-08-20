@@ -21,11 +21,16 @@ export async function dynamicActivate(locale: string) {
 }
 
 const parseLanguageFromLocale = (locale: string): SupportedLanguageCodes | null => {
-  const [language, _country] = locale.split('-');
+  const normalized = locale.trim().split(';')[0];
+  const [language, _country] = normalized.split('-');
 
-  const foundSupportedLanguage = APP_I18N_OPTIONS.supportedLangs.find(
-    (lang): lang is SupportedLanguageCodes => lang === language,
-  );
+  // Exact match first (e.g. `pt-BR`), then by base language (`pt-PT`, `pt-AO`,
+  // `pt` → `pt-BR`). Without the second step, regional variants of a language that
+  // is only shipped with one region code never resolve and silently fall back.
+  const foundSupportedLanguage =
+    APP_I18N_OPTIONS.supportedLangs.find((lang): lang is SupportedLanguageCodes => lang === normalized) ??
+    APP_I18N_OPTIONS.supportedLangs.find((lang): lang is SupportedLanguageCodes => lang === language) ??
+    APP_I18N_OPTIONS.supportedLangs.find((lang): lang is SupportedLanguageCodes => lang.split('-')[0] === language);
 
   if (!foundSupportedLanguage) {
     return null;
@@ -77,7 +82,7 @@ export const extractLocaleData = ({ headers }: ExtractLocaleDataOptions): I18nLo
   });
 
   return {
-    lang: languages[0] || APP_I18N_OPTIONS.sourceLang,
+    lang: languages[0] || APP_I18N_OPTIONS.defaultLang,
     locales: headerLocales,
   };
 };
