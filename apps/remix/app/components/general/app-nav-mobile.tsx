@@ -114,7 +114,7 @@ export const AppNavMobile = ({ isMenuOpen, onMenuOpenChange }: AppNavMobileProps
           </div>
 
           <p className="text-muted-foreground text-sm">
-            © {new Date().getFullYear()} Documenso, Inc.
+            © {new Date().getFullYear()} FSTT
             <br />
             <Trans>All rights reserved.</Trans>
           </p>

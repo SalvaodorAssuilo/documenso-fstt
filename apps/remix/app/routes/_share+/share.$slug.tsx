@@ -12,15 +12,15 @@ export function meta({ params: { slug } }: Route.MetaArgs) {
   }
 
   return [
-    { title: 'Documenso - Share' },
-    { description: 'I just signed a document in style with Documenso!' },
+    { title: 'FSTT Assinaturas' },
+    { description: 'Assinei um documento via FSTT Assinaturas.' },
     {
       property: 'og:title',
-      content: 'Documenso - Join the open source signing revolution',
+      content: 'FSTT Assinaturas',
     },
     {
       property: 'og:description',
-      content: 'I just signed with Documenso!',
+      content: 'Assinei um documento via FSTT Assinaturas.',
     },
     {
       property: 'og:type',
@@ -44,7 +44,7 @@ export function meta({ params: { slug } }: Route.MetaArgs) {
     },
     {
       name: 'twitter:description',
-      content: 'I just signed with Documenso!',
+      content: 'Assinei um documento via FSTT Assinaturas.',
     },
   ];
 }
@@ -70,7 +70,7 @@ export const loader = async ({ request, params: { slug } }: Route.LoaderArgs) =>
   }
 
   // Is hardcoded because this whole meta is hardcoded anyway for Documenso.
-  throw redirect('https://documenso.com');
+  throw redirect('https://fstt.co.ao');
 };
 
 export default function SharePage() {

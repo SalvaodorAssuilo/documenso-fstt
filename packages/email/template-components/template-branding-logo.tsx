@@ -22,7 +22,7 @@ export const TemplateBrandingLogo = ({ assetBaseUrl, className = 'mb-4 h-6' }: T
   if (!hasCustomBrandingLogo) {
     const documensoLogoUrl = new URL('/static/logo.png', assetBaseUrl).toString();
 
-    return <Img src={documensoLogoUrl} alt="Documenso Logo" className={className} />;
+    return <Img src={documensoLogoUrl} alt="FSTT" className={className} />;
   }
 
   const brandingLogo = <Img src={branding.brandingLogo} alt="Branding Logo" className={className} />;

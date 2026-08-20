@@ -452,13 +452,9 @@ const SigningPageV1 = ({ data }: { data: Awaited<ReturnType<typeof handleV1Loade
             </Link>
           ) : (
             <p className="mt-36 text-muted-foreground/60 text-sm">
-              <Trans>
-                Want to send slick signing links like this one?{' '}
-                <Link to="https://documenso.com" className="text-documenso-700 hover:text-documenso-600">
-                  Check out Documenso
-                </Link>
-                .
-              </Trans>
+              <Link to="https://fstt.co.ao" className="text-documenso-700 hover:text-documenso-600">
+                fstt.co.ao
+              </Link>
             </p>
           )}
         </div>
@@ -551,13 +547,9 @@ const SigningPageV2 = ({ data }: { data: Awaited<ReturnType<typeof handleV2Loade
             </Link>
           ) : (
             <p className="mt-36 text-muted-foreground/60 text-sm">
-              <Trans>
-                Want to send slick signing links like this one?{' '}
-                <Link to="https://documenso.com" className="text-documenso-700 hover:text-documenso-600">
-                  Check out Documenso
-                </Link>
-                .
-              </Trans>
+              <Link to="https://fstt.co.ao" className="text-documenso-700 hover:text-documenso-600">
+                fstt.co.ao
+              </Link>
             </p>
           )}
         </div>
