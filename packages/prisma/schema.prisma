@@ -673,6 +673,7 @@ model Recipient {
 enum FieldType {
   SIGNATURE
   FREE_SIGNATURE
+  STAMP
   INITIALS
   NAME
   EMAIL

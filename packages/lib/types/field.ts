@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import {
   FIELD_SIGNATURE_META_DEFAULT_VALUES,
+  FIELD_STAMP_META_DEFAULT_VALUES,
   ZCheckboxFieldMeta,
   ZDateFieldMeta,
   ZDropdownFieldMeta,
@@ -13,6 +14,7 @@ import {
   ZNumberFieldMeta,
   ZRadioFieldMeta,
   ZSignatureFieldMeta,
+  ZStampFieldMeta,
   ZTextFieldMeta,
 } from './field-meta';
 
@@ -118,6 +120,13 @@ export type TFieldSignature = z.infer<typeof ZFieldSignatureSchema>;
 
 export const ZFieldFreeSignatureSchema = ZFieldSignatureSchema;
 
+export const ZFieldStampSchema = BaseFieldSchemaUsingNumbers.extend({
+  type: z.literal(FieldType.STAMP),
+  fieldMeta: ZStampFieldMeta.catch(FIELD_STAMP_META_DEFAULT_VALUES),
+});
+
+export type TFieldStamp = z.infer<typeof ZFieldStampSchema>;
+
 export type TFieldFreeSignature = z.infer<typeof ZFieldFreeSignatureSchema>;
 
 export const ZFieldInitialsSchema = BaseFieldSchemaUsingNumbers.extend({
@@ -182,6 +191,7 @@ export type TFieldDropdown = z.infer<typeof ZFieldDropdownSchema>;
 export const ZFullFieldSchema = z.discriminatedUnion('type', [
   ZFieldTextSchema,
   ZFieldSignatureSchema,
+  ZFieldStampSchema,
   ZFieldInitialsSchema,
   ZFieldNameSchema,
   ZFieldEmailSchema,

@@ -286,7 +286,7 @@ export const signFieldWithToken = async ({
           recipientRole: recipient.role,
           fieldId: updatedField.secondaryId,
           field: match(updatedField.type)
-            .with(FieldType.SIGNATURE, FieldType.FREE_SIGNATURE, (type) => ({
+            .with(FieldType.SIGNATURE, FieldType.FREE_SIGNATURE, FieldType.STAMP, (type) => ({
               type,
               data: signatureImageAsBase64 || typedSignature || '',
             }))

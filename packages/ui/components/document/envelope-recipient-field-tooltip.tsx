@@ -13,6 +13,7 @@ import {
   HashIcon,
   LockIcon,
   MailIcon,
+  StampIcon,
   TypeIcon,
   UserIcon,
 } from 'lucide-react';
@@ -41,6 +42,7 @@ interface EnvelopeRecipientFieldTooltipProps {
 const FIELD_TYPE_ICONS: Record<FieldType, ElementType> = {
   [FieldType.SIGNATURE]: SignatureIcon,
   [FieldType.FREE_SIGNATURE]: SignatureIcon,
+  [FieldType.STAMP]: StampIcon,
   [FieldType.INITIALS]: ContactIcon,
   [FieldType.TEXT]: TypeIcon,
   [FieldType.DATE]: CalendarDaysIcon,

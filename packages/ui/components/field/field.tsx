@@ -121,7 +121,10 @@ export function FieldRootContainer({ field, children, color, className, readonly
           FIELD_ROOT_CONTAINER_CLASS_NAME,
           color?.base,
           {
-            'px-2': field.type !== FieldType.SIGNATURE && field.type !== FieldType.FREE_SIGNATURE,
+            'px-2':
+              field.type !== FieldType.SIGNATURE &&
+              field.type !== FieldType.FREE_SIGNATURE &&
+              field.type !== FieldType.STAMP,
             'justify-center': !field.inserted,
             'ring-orange-300': isValidating && isFieldUnsignedAndRequired(field),
           },

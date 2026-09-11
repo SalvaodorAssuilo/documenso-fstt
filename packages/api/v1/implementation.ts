@@ -29,11 +29,13 @@ import { getTemplateById } from '@documenso/lib/server-only/template/get-templat
 import { ZRecipientAuthOptionsSchema } from '@documenso/lib/types/document-auth';
 import { extractDerivedDocumentEmailSettings } from '@documenso/lib/types/document-email';
 import {
+  FIELD_STAMP_META_DEFAULT_VALUES,
   ZCheckboxFieldMeta,
   ZDropdownFieldMeta,
   ZFieldMetaSchema,
   ZNumberFieldMeta,
   ZRadioFieldMeta,
+  ZStampFieldMeta,
   ZTextFieldMeta,
 } from '@documenso/lib/types/field-meta';
 import { getFileServerSide } from '@documenso/lib/universal/upload/get-file.server';
@@ -1406,6 +1408,13 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
                 success: true,
                 data: undefined,
               }))
+              // Stamp fields carry their image in the field meta, so fall back to
+              // the default (FSTT) stamp when the caller does not provide one.
+              .with('STAMP', () =>
+                fieldMeta
+                  ? ZStampFieldMeta.safeParse(fieldMeta)
+                  : { success: true as const, data: FIELD_STAMP_META_DEFAULT_VALUES },
+              )
               .with('FREE_SIGNATURE', () => ({
                 success: false,
                 error: 'FREE_SIGNATURE is not supported',

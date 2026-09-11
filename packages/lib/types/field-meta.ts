@@ -2,6 +2,7 @@ import { FieldType } from '@prisma/client';
 import { z } from 'zod';
 
 import { DEFAULT_SIGNATURE_TEXT_FONT_SIZE } from '../constants/pdf';
+import { DEFAULT_STAMP_IMAGE_BASE64 } from '../constants/stamp';
 
 export const FIELD_DEFAULT_GENERIC_VERTICAL_ALIGN = 'middle';
 export const FIELD_DEFAULT_GENERIC_ALIGN = 'left';
@@ -185,8 +186,37 @@ export const ZSignatureFieldMeta = ZBaseFieldMeta.extend({
 
 export type TSignatureFieldMeta = z.infer<typeof ZSignatureFieldMeta>;
 
+/**
+ * Carimbo (stamp) field.
+ *
+ * Behaves like a signature field, except the inserted value is a fixed image
+ * configured by the sender on the field itself, instead of something the
+ * recipient draws or types.
+ */
+export const ZStampFieldMeta = ZBaseFieldMeta.extend({
+  type: z.literal('stamp'),
+  overflow: ZFieldOverflowMode.optional().default(DEFAULT_SIGNATURE_OVERFLOW_MODE),
+  /**
+   * The stamp image, as a `data:image/png;base64,...` URI.
+   *
+   * Only PNG is accepted (the editor converts uploads to PNG) and the prefix
+   * check includes the PNG magic bytes so a value that cannot be decoded is
+   * rejected when the field is saved, instead of crashing the seal job later.
+   */
+  imageBase64: z
+    .string()
+    .max(1_048_576)
+    .refine((value) => value.startsWith('data:image/png;base64,iVBORw0KGgo'), {
+      message: 'Stamp image must be a PNG data URI',
+    })
+    .optional(),
+});
+
+export type TStampFieldMeta = z.infer<typeof ZStampFieldMeta>;
+
 export const ZFieldMetaNotOptionalSchema = z.discriminatedUnion('type', [
   ZSignatureFieldMeta,
+  ZStampFieldMeta,
   ZInitialsFieldMeta,
   ZNameFieldMeta,
   ZEmailFieldMeta,
@@ -263,6 +293,10 @@ export const ZFieldAndMetaSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal(FieldType.FREE_SIGNATURE),
     fieldMeta: z.undefined(),
+  }),
+  z.object({
+    type: z.literal(FieldType.STAMP),
+    fieldMeta: ZStampFieldMeta.optional(),
   }),
   z.object({
     type: z.literal(FieldType.INITIALS),
@@ -386,9 +420,17 @@ export const FIELD_SIGNATURE_META_DEFAULT_VALUES: TSignatureFieldMeta = {
   overflow: DEFAULT_SIGNATURE_OVERFLOW_MODE,
 };
 
+export const FIELD_STAMP_META_DEFAULT_VALUES: TStampFieldMeta = {
+  type: 'stamp',
+  fontSize: DEFAULT_SIGNATURE_TEXT_FONT_SIZE,
+  overflow: DEFAULT_SIGNATURE_OVERFLOW_MODE,
+  imageBase64: DEFAULT_STAMP_IMAGE_BASE64,
+};
+
 export const FIELD_META_DEFAULT_VALUES: Record<FieldType, TFieldMetaSchema> = {
   [FieldType.SIGNATURE]: FIELD_SIGNATURE_META_DEFAULT_VALUES,
   [FieldType.FREE_SIGNATURE]: undefined,
+  [FieldType.STAMP]: FIELD_STAMP_META_DEFAULT_VALUES,
   [FieldType.INITIALS]: FIELD_INITIALS_META_DEFAULT_VALUES,
   [FieldType.NAME]: FIELD_NAME_META_DEFAULT_VALUES,
   [FieldType.EMAIL]: FIELD_EMAIL_META_DEFAULT_VALUES,
@@ -408,6 +450,10 @@ export const ZEnvelopeFieldAndMetaSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal(FieldType.FREE_SIGNATURE),
     fieldMeta: z.undefined(),
+  }),
+  z.object({
+    type: z.literal(FieldType.STAMP),
+    fieldMeta: ZStampFieldMeta.optional().default(FIELD_STAMP_META_DEFAULT_VALUES),
   }),
   z.object({
     type: z.literal(FieldType.INITIALS),

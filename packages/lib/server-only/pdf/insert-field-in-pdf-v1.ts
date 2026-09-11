@@ -126,7 +126,7 @@ export const insertFieldInPDFV1 = async (pdf: PDFDocument, field: FieldWithSigna
   await match(field)
     .with(
       {
-        type: P.union(FieldType.SIGNATURE, FieldType.FREE_SIGNATURE),
+        type: P.union(FieldType.SIGNATURE, FieldType.FREE_SIGNATURE, FieldType.STAMP),
       },
       async (field) => {
         if (field.signature?.signatureImageAsBase64) {

@@ -20,6 +20,7 @@ import {
   HashIcon,
   ListIcon,
   MailIcon,
+  StampIcon,
   TextIcon,
   UserIcon,
 } from 'lucide-react';
@@ -37,6 +38,11 @@ export const fieldButtonList = [
     icon: SignatureIcon,
     name: msg`Signature`,
     className: 'font-signature text-lg',
+  },
+  {
+    type: FieldType.STAMP,
+    icon: StampIcon,
+    name: msg`Stamp`,
   },
   {
     type: FieldType.EMAIL,
@@ -169,7 +175,13 @@ export const EnvelopeEditorFieldDragDrop = ({
 
       // Get the bounds as a percentage of the page width and height
       const fieldPageWidth = (fieldBounds.current.width / width) * 100;
-      const fieldPageHeight = (fieldBounds.current.height / height) * 100;
+
+      // Stamps are round, so start them off square by deriving the height from
+      // the width in pixels rather than from the generic field height.
+      const fieldPageHeight =
+        selectedField === FieldType.STAMP
+          ? (fieldBounds.current.width / height) * 100
+          : (fieldBounds.current.height / height) * 100;
 
       // And center it based on the bounds
       pageX -= fieldPageWidth / 2;

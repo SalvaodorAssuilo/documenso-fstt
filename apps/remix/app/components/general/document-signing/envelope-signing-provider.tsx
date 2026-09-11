@@ -358,7 +358,7 @@ export const EnvelopeSigningProvider = ({
       ...insertionValues,
     };
 
-    if (fieldValue.type === FieldType.SIGNATURE) {
+    if (fieldValue.type === FieldType.SIGNATURE || fieldValue.type === FieldType.STAMP) {
       const isBase64 = isBase64Image(fieldValue.value || '');
 
       updatedField.signature = fieldValue.value

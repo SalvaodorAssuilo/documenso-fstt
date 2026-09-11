@@ -186,7 +186,7 @@ export const EnvelopeSignerCompleteDialog = () => {
           let value = field.customText;
           let isBase64 = false;
 
-          if (field.type === FieldType.SIGNATURE && field.signature) {
+          if ((field.type === FieldType.SIGNATURE || field.type === FieldType.STAMP) && field.signature) {
             value = field.signature.signatureImageAsBase64 || field.signature.typedSignature || '';
             isBase64 = isBase64Image(value);
           }

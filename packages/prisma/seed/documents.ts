@@ -12,6 +12,7 @@ import {
   FIELD_NUMBER_META_DEFAULT_VALUES,
   FIELD_RADIO_META_DEFAULT_VALUES,
   FIELD_SIGNATURE_META_DEFAULT_VALUES,
+  FIELD_STAMP_META_DEFAULT_VALUES,
   FIELD_TEXT_META_DEFAULT_VALUES,
 } from '@documenso/lib/types/field-meta';
 import { SignatureLevel } from '@documenso/lib/types/signature-level';
@@ -599,6 +600,7 @@ export const seedPendingDocumentWithFullFields = async ({
                 .with(FieldType.RADIO, () => FIELD_RADIO_META_DEFAULT_VALUES)
                 .with(FieldType.DROPDOWN, () => FIELD_DROPDOWN_META_DEFAULT_VALUES)
                 .with(FieldType.INITIALS, () => FIELD_INITIALS_META_DEFAULT_VALUES)
+                .with(FieldType.STAMP, () => FIELD_STAMP_META_DEFAULT_VALUES)
                 .with(FieldType.FREE_SIGNATURE, () => undefined)
                 .exhaustive(),
             })),

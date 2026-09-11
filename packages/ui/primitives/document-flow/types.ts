@@ -44,6 +44,7 @@ export type TDocumentFlowFormSchema = z.infer<typeof ZDocumentFlowFormSchema>;
 export const FRIENDLY_FIELD_TYPE: Record<FieldType, MessageDescriptor> = {
   [FieldType.SIGNATURE]: msg`Signature`,
   [FieldType.FREE_SIGNATURE]: msg`Free Signature`,
+  [FieldType.STAMP]: msg`Stamp`,
   [FieldType.INITIALS]: msg`Initials`,
   [FieldType.TEXT]: msg`Text`,
   [FieldType.DATE]: msg`Date`,

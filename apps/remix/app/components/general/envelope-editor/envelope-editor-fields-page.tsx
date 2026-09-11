@@ -15,6 +15,7 @@ import {
   type TNumberFieldMeta,
   type TRadioFieldMeta,
   type TSignatureFieldMeta,
+  type TStampFieldMeta,
   type TTextFieldMeta,
 } from '@documenso/lib/types/field-meta';
 import { getEnvelopeItemPermissions } from '@documenso/lib/utils/envelope';
@@ -48,6 +49,7 @@ import { EditorFieldNameForm } from '~/components/forms/editor/editor-field-name
 import { EditorFieldNumberForm } from '~/components/forms/editor/editor-field-number-form';
 import { EditorFieldRadioForm } from '~/components/forms/editor/editor-field-radio-form';
 import { EditorFieldSignatureForm } from '~/components/forms/editor/editor-field-signature-form';
+import { EditorFieldStampForm } from '~/components/forms/editor/editor-field-stamp-form';
 import { EditorFieldTextForm } from '~/components/forms/editor/editor-field-text-form';
 import { EnvelopePdfViewer } from '~/components/general/pdf-viewer/envelope-pdf-viewer';
 import { useCurrentTeam } from '~/providers/team';
@@ -61,6 +63,7 @@ import { EnvelopeRecipientSelector } from './envelope-recipient-selector';
 const FieldSettingsTypeTranslations: Record<FieldType, MessageDescriptor> = {
   [FieldType.SIGNATURE]: msg`Signature Settings`,
   [FieldType.FREE_SIGNATURE]: msg`Free Signature Settings`,
+  [FieldType.STAMP]: msg`Stamp Settings`,
   [FieldType.TEXT]: msg`Text Settings`,
   [FieldType.DATE]: msg`Date Settings`,
   [FieldType.EMAIL]: msg`Email Settings`,
@@ -451,6 +454,12 @@ export const EnvelopeEditorFieldsPage = () => {
                     .with(FieldType.SIGNATURE, () => (
                       <EditorFieldSignatureForm
                         value={selectedField?.fieldMeta as TSignatureFieldMeta | undefined}
+                        onValueChange={(value) => updateSelectedFieldMeta(value)}
+                      />
+                    ))
+                    .with(FieldType.STAMP, () => (
+                      <EditorFieldStampForm
+                        value={selectedField?.fieldMeta as TStampFieldMeta | undefined}
                         onValueChange={(value) => updateSelectedFieldMeta(value)}
                       />
                     ))

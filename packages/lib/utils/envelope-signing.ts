@@ -226,6 +226,27 @@ export const extractFieldInsertionValues = ({
         inserted: true,
       };
     })
+    .with({ type: FieldType.STAMP }, (fieldValue) => {
+      const { value } = fieldValue;
+
+      if (!value) {
+        return {
+          customText: '',
+          inserted: false,
+        };
+      }
+
+      if (!isBase64Image(value)) {
+        throw new AppError(AppErrorCode.INVALID_BODY, {
+          message: 'Stamp fields must be signed with an image',
+        });
+      }
+
+      return {
+        customText: '',
+        inserted: true,
+      };
+    })
     .with({ type: FieldType.SIGNATURE }, (fieldValue) => {
       const { value } = fieldValue;
 

@@ -1,6 +1,6 @@
 import { isSignatureFieldType } from '@documenso/prisma/guards/is-signature-field';
 import type { Envelope, Field, Recipient } from '@prisma/client';
-import { RecipientRole, SigningStatus } from '@prisma/client';
+import { FieldType, RecipientRole, SigningStatus } from '@prisma/client';
 
 import { NEXT_PUBLIC_WEBAPP_URL } from '../constants/app';
 import { AppError, AppErrorCode } from '../errors/app-error';
@@ -78,8 +78,11 @@ export const getRecipientsWithMissingFields = <T extends Pick<TRecipientLite, 'i
 ): T[] => {
   return recipients.filter((recipient) => {
     if (recipient.role === RecipientRole.SIGNER) {
+      // A stamp field is a valid thing for a signer to insert, so it satisfies the
+      // "signers need at least one signature field" rule on its own.
       const hasSignatureField = fields.some(
-        (field) => field.recipientId === recipient.id && isSignatureFieldType(field.type),
+        (field) =>
+          field.recipientId === recipient.id && (isSignatureFieldType(field.type) || field.type === FieldType.STAMP),
       );
 
       return !hasSignatureField;

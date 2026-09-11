@@ -15133,3 +15133,22 @@ msgstr "Seu código de verificação:"
 #: apps/remix/app/routes/_authenticated+/o.$orgUrl.settings.sso.tsx
 msgid "your-domain.com another-domain.com"
 msgstr "seu-dominio.com outro-dominio.com"
+
+#. Added by the stamp (carimbo) field patch
+msgid "Stamp"
+msgstr "Carimbo"
+
+msgid "Stamp Settings"
+msgstr "Definições do carimbo"
+
+msgid "No stamp image yet"
+msgstr "Ainda sem imagem de carimbo"
+
+msgid "Upload image"
+msgstr "Carregar imagem"
+
+msgid "Replace image"
+msgstr "Substituir imagem"
+
+msgid "A PNG with a transparent background works best. The image is stored on the field itself."
+msgstr "Um PNG com fundo transparente funciona melhor. A imagem fica guardada no próprio campo."

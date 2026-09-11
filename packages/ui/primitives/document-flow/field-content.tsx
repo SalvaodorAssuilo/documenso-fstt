@@ -130,6 +130,24 @@ export const FieldContent = ({ field, documentMeta }: FieldIconProps) => {
     );
   }
 
+  if (field.type === FieldType.STAMP) {
+    const stampImage =
+      (field.inserted ? field.signature?.signatureImageAsBase64 : null) ||
+      (field.fieldMeta?.type === 'stamp' ? field.fieldMeta.imageBase64 : null);
+
+    if (stampImage) {
+      return (
+        <img
+          src={stampImage}
+          alt="Stamp"
+          className={cn('h-full w-full object-contain', {
+            'opacity-40': !field.inserted,
+          })}
+        />
+      );
+    }
+  }
+
   if (field.type === FieldType.SIGNATURE && field.signature?.signatureImageAsBase64 && field.inserted) {
     return (
       <img src={field.signature.signatureImageAsBase64} alt="Signature" className="h-full w-full object-contain" />
