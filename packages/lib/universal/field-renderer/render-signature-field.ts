@@ -8,22 +8,73 @@ import { calculateOverflowLayout } from './calculate-overflow-layout';
 import { createFieldHoverInteraction, upsertFieldGroup, upsertFieldRect } from './field-generic-items';
 import type { FieldToRender, RenderFieldElementOptions } from './field-renderer';
 import { calculateFieldPosition } from './field-renderer';
+import type { SignatureContentBounds } from './signature-content-bounds';
+import { getSignatureContentBounds } from './signature-content-bounds';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let SkiaImage: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let SkiaImageData: any;
 
 void (async () => {
   if (typeof window === 'undefined') {
     const mod = await import('@documenso/skia-canvas');
     SkiaImage = mod.Image;
+    SkiaImageData = mod.ImageData;
   }
 })();
 
-const getImageDimensions = (img: HTMLImageElement, fieldWidth: number, fieldHeight: number) => {
-  let imageWidth = img.width;
-  let imageHeight = img.height;
+/**
+ * Pixels kept around the signature strokes when cropping, so anti-aliased
+ * edges and pen tapers are not clipped.
+ */
+const SIGNATURE_CROP_PADDING = 4;
 
-  const scalingFactor = Math.min(fieldWidth / imageWidth, fieldHeight / imageHeight, 1);
+const readImagePixels = (img: HTMLImageElement): ImageData | null => {
+  if (typeof window !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    if (!ctx) {
+      return null;
+    }
+
+    ctx.drawImage(img, 0, 0);
+
+    return ctx.getImageData(0, 0, img.width, img.height);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return new SkiaImageData(img) as ImageData;
+};
+
+/**
+ * The part of the signature image to render.
+ *
+ * Signature pads export their whole canvas, so the strokes can cover a small
+ * part of a mostly empty image. Cropping to the strokes lets them fill the
+ * field. Falls back to the whole image when its pixels cannot be read.
+ */
+const getSignatureCrop = (img: HTMLImageElement): SignatureContentBounds => {
+  const wholeImage = { x: 0, y: 0, width: img.width, height: img.height };
+
+  try {
+    const pixels = readImagePixels(img);
+
+    return (pixels && getSignatureContentBounds(pixels, SIGNATURE_CROP_PADDING)) ?? wholeImage;
+  } catch {
+    return wholeImage;
+  }
+};
+
+const getImageDimensions = (crop: SignatureContentBounds, fieldWidth: number, fieldHeight: number) => {
+  let imageWidth = crop.width;
+  let imageHeight = crop.height;
+
+  const scalingFactor = Math.min(fieldWidth / imageWidth, fieldHeight / imageHeight);
 
   imageWidth = imageWidth * scalingFactor;
   imageHeight = imageHeight * scalingFactor;
@@ -81,9 +132,12 @@ const createSignatureImage = (signatureImageAsBase64: string, fieldWidth: number
     });
 
     img.onload = () => {
+      const crop = getSignatureCrop(img);
+
       image.setAttrs({
         image: img,
-        ...getImageDimensions(img, fieldWidth, fieldHeight),
+        crop,
+        ...getImageDimensions(crop, fieldWidth, fieldHeight),
       });
 
       // Cache the image as a high-resolution bitmap so it stays sharp on
@@ -106,10 +160,12 @@ const createSignatureImage = (signatureImageAsBase64: string, fieldWidth: number
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const img = new SkiaImage(signatureImageAsBase64) as unknown as HTMLImageElement;
+  const crop = getSignatureCrop(img);
 
   return new Konva.Image({
     image: img,
-    ...getImageDimensions(img, fieldWidth, fieldHeight),
+    crop,
+    ...getImageDimensions(crop, fieldWidth, fieldHeight),
     listening: false,
   });
 };
