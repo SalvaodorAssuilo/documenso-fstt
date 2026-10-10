@@ -9,18 +9,21 @@ import { createFieldHoverInteraction, upsertFieldGroup, upsertFieldRect } from '
 import type { FieldToRender, RenderFieldElementOptions } from './field-renderer';
 import { calculateFieldPosition } from './field-renderer';
 import type { SignatureContentBounds } from './signature-content-bounds';
-import { getSignatureContentBounds } from './signature-content-bounds';
+import { analyseSignatureImage, removeSignaturePaper } from './signature-content-bounds';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let SkiaImage: any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let SkiaImageData: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let SkiaCanvas: any;
 
 void (async () => {
   if (typeof window === 'undefined') {
     const mod = await import('@documenso/skia-canvas');
     SkiaImage = mod.Image;
     SkiaImageData = mod.ImageData;
+    SkiaCanvas = mod.Canvas;
   }
 })();
 
@@ -51,20 +54,64 @@ const readImagePixels = (img: HTMLImageElement): ImageData | null => {
   return new SkiaImageData(img) as ImageData;
 };
 
+const createCanvas = (width: number, height: number): HTMLCanvasElement => {
+  if (typeof window !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+
+    return canvas;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return new SkiaCanvas(width, height) as HTMLCanvasElement;
+};
+
+type SignatureImageSource = {
+  image: HTMLImageElement | HTMLCanvasElement;
+  crop: SignatureContentBounds;
+};
+
 /**
- * The part of the signature image to render.
+ * The signature image to render and the part of it to show.
  *
  * Signature pads export their whole canvas, so the strokes can cover a small
  * part of a mostly empty image. Cropping to the strokes lets them fill the
- * field. Falls back to the whole image when its pixels cannot be read.
+ * field. An uploaded scan or photo also has its paper removed, so only the
+ * strokes show on the document, as with a drawn signature.
+ *
+ * Stamps are designed images, so they are only cropped, never cut out.
+ *
+ * Falls back to the whole image when its pixels cannot be read.
  */
-const getSignatureCrop = (img: HTMLImageElement): SignatureContentBounds => {
-  const wholeImage = { x: 0, y: 0, width: img.width, height: img.height };
+const prepareSignatureImage = (img: HTMLImageElement, canHavePaper: boolean): SignatureImageSource => {
+  const wholeImage = { image: img, crop: { x: 0, y: 0, width: img.width, height: img.height } };
 
   try {
     const pixels = readImagePixels(img);
+    const analysis = pixels && analyseSignatureImage(pixels, SIGNATURE_CROP_PADDING, canHavePaper);
 
-    return (pixels && getSignatureContentBounds(pixels, SIGNATURE_CROP_PADDING)) ?? wholeImage;
+    if (!pixels || !analysis || analysis.bounds.width <= 0 || analysis.bounds.height <= 0) {
+      return wholeImage;
+    }
+
+    if (!analysis.paper) {
+      return { image: img, crop: analysis.bounds };
+    }
+
+    const { width, height } = analysis.bounds;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      return { image: img, crop: analysis.bounds };
+    }
+
+    const strokes = ctx.createImageData(width, height);
+    strokes.data.set(removeSignaturePaper(pixels, analysis.bounds, analysis.paper));
+    ctx.putImageData(strokes, 0, 0);
+
+    return { image: canvas, crop: { x: 0, y: 0, width, height } };
   } catch {
     return wholeImage;
   }
@@ -118,7 +165,12 @@ const SIGNATURE_IMAGE_CACHE_PIXEL_RATIO = 2;
  * Build a Konva.Image for a base64 signature, sized to fit within the given
  * field dimensions. Works in both browser and Node.js (via skia-canvas).
  */
-const createSignatureImage = (signatureImageAsBase64: string, fieldWidth: number, fieldHeight: number): Konva.Image => {
+const createSignatureImage = (
+  signatureImageAsBase64: string,
+  fieldWidth: number,
+  fieldHeight: number,
+  canHavePaper: boolean,
+): Konva.Image => {
   if (typeof window !== 'undefined') {
     const img = new Image();
 
@@ -132,10 +184,10 @@ const createSignatureImage = (signatureImageAsBase64: string, fieldWidth: number
     });
 
     img.onload = () => {
-      const crop = getSignatureCrop(img);
+      const { image: source, crop } = prepareSignatureImage(img, canHavePaper);
 
       image.setAttrs({
-        image: img,
+        image: source,
         crop,
         ...getImageDimensions(crop, fieldWidth, fieldHeight),
       });
@@ -160,10 +212,10 @@ const createSignatureImage = (signatureImageAsBase64: string, fieldWidth: number
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const img = new SkiaImage(signatureImageAsBase64) as unknown as HTMLImageElement;
-  const crop = getSignatureCrop(img);
+  const { image: source, crop } = prepareSignatureImage(img, canHavePaper);
 
   return new Konva.Image({
-    image: img,
+    image: source,
     crop,
     ...getImageDimensions(crop, fieldWidth, fieldHeight),
     listening: false,
@@ -204,7 +256,12 @@ const createFieldSignature = (field: FieldToRender, options: RenderFieldElementO
 
     if (field.inserted && signature?.signatureImageAsBase64) {
       return {
-        node: createSignatureImage(signature.signatureImageAsBase64, fieldWidth, fieldHeight),
+        node: createSignatureImage(
+          signature.signatureImageAsBase64,
+          fieldWidth,
+          fieldHeight,
+          field.type === 'SIGNATURE',
+        ),
         isImageSignature: true,
         isLabel: false,
       };
@@ -225,7 +282,12 @@ const createFieldSignature = (field: FieldToRender, options: RenderFieldElementO
 
     if (signature?.signatureImageAsBase64) {
       return {
-        node: createSignatureImage(signature.signatureImageAsBase64, fieldWidth, fieldHeight),
+        node: createSignatureImage(
+          signature.signatureImageAsBase64,
+          fieldWidth,
+          fieldHeight,
+          field.type === 'SIGNATURE',
+        ),
         isImageSignature: true,
         isLabel: false,
       };
