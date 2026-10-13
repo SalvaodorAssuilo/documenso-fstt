@@ -32,18 +32,31 @@ const MIN_WIDTH_PX = 36;
 const DEFAULT_HEIGHT_PX = MIN_HEIGHT_PX * 2.5;
 const DEFAULT_WIDTH_PX = MIN_WIDTH_PX * 2.5;
 
-// Stamps start at a real-world size instead of a screen size, so they come out
-// the same whatever the zoom: 4 cm across on the short side of an A4 page (21 cm).
-const STAMP_SIZE_RATIO = 4 / 21;
+// Signatures and stamps start at a real-world size instead of a screen size, so
+// they come out the same whatever the zoom. Sizes are in cm on an A4 page and
+// scale with the short side of the page (21 cm).
+const PAGE_SHORT_SIDE_CM = 21;
 
-const getStampSidePx = ($page: Element | null) => {
-  if (!$page) {
-    return DEFAULT_WIDTH_PX;
+const PHYSICAL_FIELD_SIZE_CM: Partial<Record<FieldType, { width: number; height: number }>> = {
+  [FieldType.SIGNATURE]: { width: 5, height: 2 },
+  // Stamps are round, so they start off square.
+  [FieldType.STAMP]: { width: 4, height: 4 },
+};
+
+const getPhysicalFieldSizePx = (fieldType: FieldType | null, $page: Element) => {
+  const sizeCm = fieldType ? PHYSICAL_FIELD_SIZE_CM[fieldType] : undefined;
+
+  if (!sizeCm) {
+    return null;
   }
 
   const { width, height } = getBoundingClientRect($page);
+  const pxPerCm = Math.min(width, height) / PAGE_SHORT_SIDE_CM;
 
-  return Math.min(width, height) * STAMP_SIZE_RATIO;
+  return {
+    width: sizeCm.width * pxPerCm,
+    height: sizeCm.height * pxPerCm,
+  };
 };
 
 export const fieldButtonList = [
@@ -187,15 +200,12 @@ export const EnvelopeEditorFieldDragDrop = ({
       let pageX = ((event.pageX - left) / width) * 100;
       let pageY = ((event.pageY - top) / height) * 100;
 
-      // Stamps are round, so start them off square, sized from the page they land on.
-      const stampSidePx = getStampSidePx($page);
+      // Fields with a real-world size are sized from the page they land on.
+      const fieldSizePx = getPhysicalFieldSizePx(selectedField, $page) ?? fieldBounds.current;
 
       // Get the bounds as a percentage of the page width and height
-      const fieldPageWidth =
-        selectedField === FieldType.STAMP ? (stampSidePx / width) * 100 : (fieldBounds.current.width / width) * 100;
-
-      const fieldPageHeight =
-        selectedField === FieldType.STAMP ? (stampSidePx / height) * 100 : (fieldBounds.current.height / height) * 100;
+      const fieldPageWidth = (fieldSizePx.width / width) * 100;
+      const fieldPageHeight = (fieldSizePx.height / height) * 100;
 
       // And center it based on the bounds
       pageX -= fieldPageWidth / 2;
@@ -232,18 +242,7 @@ export const EnvelopeEditorFieldDragDrop = ({
       return;
     }
 
-    if (selectedFieldRef.current === FieldType.STAMP) {
-      const stampSidePx = getStampSidePx($page);
-
-      fieldBounds.current = {
-        height: stampSidePx,
-        width: stampSidePx,
-      };
-
-      return;
-    }
-
-    fieldBounds.current = {
+    fieldBounds.current = getPhysicalFieldSizePx(selectedFieldRef.current, $page) ?? {
       height: Math.max(DEFAULT_HEIGHT_PX),
       width: Math.max(DEFAULT_WIDTH_PX),
     };
