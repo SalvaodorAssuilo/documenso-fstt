@@ -32,6 +32,20 @@ const MIN_WIDTH_PX = 36;
 const DEFAULT_HEIGHT_PX = MIN_HEIGHT_PX * 2.5;
 const DEFAULT_WIDTH_PX = MIN_WIDTH_PX * 2.5;
 
+// Stamps start at a real-world size instead of a screen size, so they come out
+// the same whatever the zoom: 4 cm across on the short side of an A4 page (21 cm).
+const STAMP_SIZE_RATIO = 4 / 21;
+
+const getStampSidePx = ($page: Element | null) => {
+  if (!$page) {
+    return DEFAULT_WIDTH_PX;
+  }
+
+  const { width, height } = getBoundingClientRect($page);
+
+  return Math.min(width, height) * STAMP_SIZE_RATIO;
+};
+
 export const fieldButtonList = [
   {
     type: FieldType.SIGNATURE,
@@ -173,15 +187,15 @@ export const EnvelopeEditorFieldDragDrop = ({
       let pageX = ((event.pageX - left) / width) * 100;
       let pageY = ((event.pageY - top) / height) * 100;
 
-      // Get the bounds as a percentage of the page width and height
-      const fieldPageWidth = (fieldBounds.current.width / width) * 100;
+      // Stamps are round, so start them off square, sized from the page they land on.
+      const stampSidePx = getStampSidePx($page);
 
-      // Stamps are round, so start them off square by deriving the height from
-      // the width in pixels rather than from the generic field height.
+      // Get the bounds as a percentage of the page width and height
+      const fieldPageWidth =
+        selectedField === FieldType.STAMP ? (stampSidePx / width) * 100 : (fieldBounds.current.width / width) * 100;
+
       const fieldPageHeight =
-        selectedField === FieldType.STAMP
-          ? (fieldBounds.current.width / height) * 100
-          : (fieldBounds.current.height / height) * 100;
+        selectedField === FieldType.STAMP ? (stampSidePx / height) * 100 : (fieldBounds.current.height / height) * 100;
 
       // And center it based on the bounds
       pageX -= fieldPageWidth / 2;
@@ -208,18 +222,40 @@ export const EnvelopeEditorFieldDragDrop = ({
     [isWithinPageBounds, selectedField, selectedRecipientId, selectedEnvelopeItemId, getPage, editorFields],
   );
 
-  useEffect(() => {
-    const observer = new MutationObserver((_mutations) => {
-      const $page = document.querySelector(PDF_VIEWER_PAGE_SELECTOR);
+  const selectedFieldRef = useRef(selectedField);
+  selectedFieldRef.current = selectedField;
 
-      if (!$page) {
-        return;
-      }
+  const updateFieldBounds = useCallback(() => {
+    const $page = document.querySelector(PDF_VIEWER_PAGE_SELECTOR);
+
+    if (!$page) {
+      return;
+    }
+
+    if (selectedFieldRef.current === FieldType.STAMP) {
+      const stampSidePx = getStampSidePx($page);
 
       fieldBounds.current = {
-        height: Math.max(DEFAULT_HEIGHT_PX),
-        width: Math.max(DEFAULT_WIDTH_PX),
+        height: stampSidePx,
+        width: stampSidePx,
       };
+
+      return;
+    }
+
+    fieldBounds.current = {
+      height: Math.max(DEFAULT_HEIGHT_PX),
+      width: Math.max(DEFAULT_WIDTH_PX),
+    };
+  }, []);
+
+  useEffect(() => {
+    updateFieldBounds();
+  }, [selectedField, updateFieldBounds]);
+
+  useEffect(() => {
+    const observer = new MutationObserver((_mutations) => {
+      updateFieldBounds();
     });
 
     observer.observe(document.body, {
@@ -230,7 +266,7 @@ export const EnvelopeEditorFieldDragDrop = ({
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [updateFieldBounds]);
 
   useEffect(() => {
     if (selectedField) {
