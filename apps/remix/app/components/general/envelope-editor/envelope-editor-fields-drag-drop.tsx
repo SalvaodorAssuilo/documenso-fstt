@@ -32,6 +32,33 @@ const MIN_WIDTH_PX = 36;
 const DEFAULT_HEIGHT_PX = MIN_HEIGHT_PX * 2.5;
 const DEFAULT_WIDTH_PX = MIN_WIDTH_PX * 2.5;
 
+// Signatures and stamps start at a real-world size instead of a screen size, so
+// they come out the same whatever the zoom. Sizes are in cm on an A4 page and
+// scale with the short side of the page (21 cm).
+const PAGE_SHORT_SIDE_CM = 21;
+
+const PHYSICAL_FIELD_SIZE_CM: Partial<Record<FieldType, { width: number; height: number }>> = {
+  [FieldType.SIGNATURE]: { width: 5, height: 2 },
+  // Stamps are round, so they start off square.
+  [FieldType.STAMP]: { width: 4, height: 4 },
+};
+
+const getPhysicalFieldSizePx = (fieldType: FieldType | null, $page: Element) => {
+  const sizeCm = fieldType ? PHYSICAL_FIELD_SIZE_CM[fieldType] : undefined;
+
+  if (!sizeCm) {
+    return null;
+  }
+
+  const { width, height } = getBoundingClientRect($page);
+  const pxPerCm = Math.min(width, height) / PAGE_SHORT_SIDE_CM;
+
+  return {
+    width: sizeCm.width * pxPerCm,
+    height: sizeCm.height * pxPerCm,
+  };
+};
+
 export const fieldButtonList = [
   {
     type: FieldType.SIGNATURE,
@@ -173,15 +200,12 @@ export const EnvelopeEditorFieldDragDrop = ({
       let pageX = ((event.pageX - left) / width) * 100;
       let pageY = ((event.pageY - top) / height) * 100;
 
-      // Get the bounds as a percentage of the page width and height
-      const fieldPageWidth = (fieldBounds.current.width / width) * 100;
+      // Fields with a real-world size are sized from the page they land on.
+      const fieldSizePx = getPhysicalFieldSizePx(selectedField, $page) ?? fieldBounds.current;
 
-      // Stamps are round, so start them off square by deriving the height from
-      // the width in pixels rather than from the generic field height.
-      const fieldPageHeight =
-        selectedField === FieldType.STAMP
-          ? (fieldBounds.current.width / height) * 100
-          : (fieldBounds.current.height / height) * 100;
+      // Get the bounds as a percentage of the page width and height
+      const fieldPageWidth = (fieldSizePx.width / width) * 100;
+      const fieldPageHeight = (fieldSizePx.height / height) * 100;
 
       // And center it based on the bounds
       pageX -= fieldPageWidth / 2;
@@ -208,18 +232,29 @@ export const EnvelopeEditorFieldDragDrop = ({
     [isWithinPageBounds, selectedField, selectedRecipientId, selectedEnvelopeItemId, getPage, editorFields],
   );
 
+  const selectedFieldRef = useRef(selectedField);
+  selectedFieldRef.current = selectedField;
+
+  const updateFieldBounds = useCallback(() => {
+    const $page = document.querySelector(PDF_VIEWER_PAGE_SELECTOR);
+
+    if (!$page) {
+      return;
+    }
+
+    fieldBounds.current = getPhysicalFieldSizePx(selectedFieldRef.current, $page) ?? {
+      height: Math.max(DEFAULT_HEIGHT_PX),
+      width: Math.max(DEFAULT_WIDTH_PX),
+    };
+  }, []);
+
+  useEffect(() => {
+    updateFieldBounds();
+  }, [selectedField, updateFieldBounds]);
+
   useEffect(() => {
     const observer = new MutationObserver((_mutations) => {
-      const $page = document.querySelector(PDF_VIEWER_PAGE_SELECTOR);
-
-      if (!$page) {
-        return;
-      }
-
-      fieldBounds.current = {
-        height: Math.max(DEFAULT_HEIGHT_PX),
-        width: Math.max(DEFAULT_WIDTH_PX),
-      };
+      updateFieldBounds();
     });
 
     observer.observe(document.body, {
@@ -230,7 +265,7 @@ export const EnvelopeEditorFieldDragDrop = ({
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [updateFieldBounds]);
 
   useEffect(() => {
     if (selectedField) {
